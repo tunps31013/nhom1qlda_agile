@@ -750,10 +750,11 @@ public class QUANLYDIEM extends javax.swing.JFrame {
                 GRADE gr = new GRADE(iD, maSv, hoTen, tiengAnh, tinHoc, gdTC, trungBinh);
                 list.add(gr);
             }
+            DecimalFormat decimalFormat = new DecimalFormat("#.##");
             for (GRADE gr : list) {
                 model.addRow(new Object[]{
                     gr.getMaSV(), gr.getHoTen(), gr.getTiengAnh(), gr.getTinHoc(),
-                    gr.getGdTC(), gr.getDiemTb()
+                    gr.getGdTC(), decimalFormat.format(gr.getDiemTb())
                 });
             }
         } catch (SQLException ex) {
