@@ -15,6 +15,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
@@ -46,12 +48,20 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
             System.out.println(ex);
         }
         conn = KETNOISQL.getConnection("sa", "nguyentuakina", "QLDA_SINHVIEN");
+
         initComponents();
         setLocationRelativeTo(null);
         setTitle("Quản lý sinh viên");
+
         loadTable();
-//        display(current);
+        if (!list.isEmpty()) {
+            display(current);
+        }
+
         lblReocrd.setText(layThongTinBanGhi());
+        jButton4.setEnabled(false);
+        jButton5.setEnabled(false);
+
     }
 
     public void display(int index) {
@@ -65,12 +75,15 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
             rNu.setSelected(true);
         }
         txtDiachi.setText(list.get(index).getDiaChi());
+
         ImageIcon ic = new ImageIcon(list.get(index).getAnh());
-        ic.getImage().getScaledInstance(lblAnh.getWidth(), lblAnh.getHeight(), Image.SCALE_SMOOTH);
+        Image scaledImage = ic.getImage().getScaledInstance(lblAnh.getWidth(), lblAnh.getHeight(), Image.SCALE_SMOOTH);
+        ic.setImage(scaledImage); // Cập nhật hình ảnh mới đã co giãn cho ImageIcon
         lblAnh.setText("");
-        lblAnh.setHorizontalAlignment(lblAnh.CENTER);
-        lblAnh.setVerticalAlignment(lblAnh.CENTER);
+        lblAnh.setHorizontalAlignment(JLabel.CENTER);
+        lblAnh.setVerticalAlignment(JLabel.CENTER);
         lblAnh.setIcon(ic);
+
         tblSinhVien.setRowSelectionInterval(index, index);
         current = index;
         lblReocrd.setText(layThongTinBanGhi());
@@ -82,6 +95,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
         model.setRowCount(0);
         tblSinhVien.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 //        String[] a = {"Mã sinh viên", "Họ và tên", "Email", "Số điện thoại", "Giới tính", "Địa chỉ"};
+
         String select = "select * from STUDENTS";
         Statement st = conn.createStatement();
         ResultSet rs = st.executeQuery(select);
@@ -97,11 +111,13 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
             STUDENTS sv = new STUDENTS(maSV, hoTen, eMail, soDT, gioiTinh, diaChi, anh);
             list.add(sv);
         }
+
         for (STUDENTS sv : list) {
             model.addRow(new Object[]{
                 sv.getMaSV(), sv.getHoTen(), sv.geteMail(), sv.getSoDT(), sv.getGioiTinh(), sv.getDiaChi()
             });
         }
+
         rs.close();
     }
 
@@ -127,6 +143,14 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
                 + "N'" + getGioiTinh() + "',N'" + txtDiachi.getText() + "',N'" + imageSave + "')";
         boolean checkID = true;
         int id = 0;
+
+        for (STUDENTS sv : list) {
+            if (txtEmail.getText().equalsIgnoreCase(sv.geteMail())) {
+                JOptionPane.showMessageDialog(this, "Email này đã có rồi");
+                return;
+            }
+        }
+
         while (checkID) {
             Random random = new Random();
             id = random.nextInt(1000); // Thay số trong ngoặc bằng giới hạn trên của giá trị ID
@@ -134,15 +158,11 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
             PreparedStatement checkStmt = conn.prepareStatement(checkSQL);
             checkStmt.setInt(1, id);
             ResultSet rs = checkStmt.executeQuery();
-//                if (list.size() > 5) {
-//                    JOptionPane.showMessageDialog(this, "Max ID");
-//                    checkID = false;
-//                }
             if (rs.next() && rs.getInt(1) == 0) {
-//                JOptionPane.showMessageDialog(this, rs.getInt(1));
                 checkID = false; // Không trùng, thoát khỏi vòng lặp
             }
         }
+
         String insertSQL = "insert into GRADE values"
                 + "('" + id + "','" + txtMasv.getText() + "','0','0','0')";
         String insertUSERSQL = "insert into USERS values"
@@ -155,6 +175,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
                 acTionIS.execute(insertUSERSQL);
                 JOptionPane.showMessageDialog(this, "Đã thêm thành công!");
             }
+
             loadTable();
             copyImage();
         } catch (SQLException ex) {
@@ -166,6 +187,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
         if (!dir.exists()) {// nếu folder image chưa tồn tại
             dir.mkdirs();
         }
+
         f2 = new File(imageSave);
         try {
             Files.copy(f1.toPath(), f2.toPath()); // Sao chép tệp tin ảnh
@@ -173,14 +195,16 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(QUANLYSINHVIEN.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         String Iname = f2.getAbsolutePath();
         ImageIcon ic = new ImageIcon(Iname);
 //            JOptionPane.showMessageDialog(this, imageSave);
 //            chinh hinh vua voi label
-        ic.getImage().getScaledInstance(lblAnh.getWidth(), lblAnh.getHeight(), Image.SCALE_SMOOTH);
+        Image scaledImage = ic.getImage().getScaledInstance(lblAnh.getWidth(), lblAnh.getHeight(), Image.SCALE_SMOOTH);
+        ic.setImage(scaledImage); // Cập nhật hình ảnh mới đã co giãn cho ImageIcon
         lblAnh.setText("");
-        lblAnh.setHorizontalAlignment(lblAnh.CENTER);
-        lblAnh.setVerticalAlignment(lblAnh.CENTER);
+        lblAnh.setHorizontalAlignment(JLabel.CENTER);
+        lblAnh.setVerticalAlignment(JLabel.CENTER);
         lblAnh.setIcon(ic);
     }
 
@@ -203,28 +227,42 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Mã sinh viên không đúng định dạng!");
             return true;
         }
+
         if (txtHoten.getText().equals("")) {
             JOptionPane.showMessageDialog(this, "Bạn chưa nhập họ tên");
             return true;
         }
+
+        String emailFormat = "\\w+@\\w+(\\.\\w+){1,2}";
         if (txtEmail.getText().equals("")) {
             JOptionPane.showMessageDialog(this, "Bạn chưa nhập Email");
             return true;
+        } else if (!txtEmail.getText().matches(emailFormat)) {
+            JOptionPane.showMessageDialog(this, "Email không đúng định dạng");
+            return true;
         }
+
         if (txtSodt.getText().equals("")) {
             JOptionPane.showMessageDialog(this, "Bạn chưa nhập số điện thoại");
             return true;
         }
-        try {
-            int phone = Integer.parseInt(txtSodt.getText());
-        } catch (NumberFormatException e) {
+//        try {
+//            int phone = Integer.parseInt(txtSodt.getText());
+//        } catch (NumberFormatException e) {
+//            JOptionPane.showMessageDialog(this, "Số điện thoại bạn nhập không đúng định dạng!");
+//            return true;
+//        }
+        String phoneFormat = "0\\d{9,10}";
+        if (!txtSodt.getText().matches(phoneFormat)) {
             JOptionPane.showMessageDialog(this, "Số điện thoại bạn nhập không đúng định dạng!");
             return true;
         }
+
         if (txtDiachi.getText().equals("")) {
             JOptionPane.showMessageDialog(this, "Bạn chưa nhập địa chỉ");
             return true;
         }
+
         if (imageSave.equals("")) {
             JOptionPane.showMessageDialog(this, "Bạn chưa chọn ảnh");
             return true;
@@ -691,6 +729,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
         txtDiachi.setText("");
         txtSearchMasv.setText("");
         lblAnh.setIcon(null);
+//        tblSinhVien.setRowSelectionAllowed(false);
     }//GEN-LAST:event_btnNewActionPerformed
 
     private void txtHotenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtHotenActionPerformed
@@ -716,6 +755,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
             }
             deletedImage();
             loadTable();
+            current = 0;
             btnNewActionPerformed(evt);
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Xóa thất bại\n" + ex);
@@ -723,9 +763,25 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
     }//GEN-LAST:event_btnDeleteActionPerformed
 
     private void tblSinhVienMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblSinhVienMousePressed
-        display(tblSinhVien.getSelectedRow());
-//        btnDelete.setEnabled(false);
+        current = tblSinhVien.getSelectedRow();
+        display(current);
         layThongTinBanGhi();
+        if (current <= 0) {
+            jButton4.setEnabled(false);
+            jButton5.setEnabled(false);
+            jButton3.setEnabled(true);
+            jButton2.setEnabled(true);
+        } else if (current == list.size() - 1) {
+            jButton4.setEnabled(true);
+            jButton5.setEnabled(true);
+            jButton3.setEnabled(false);
+            jButton2.setEnabled(false);
+        } else {
+            jButton3.setEnabled(true);
+            jButton2.setEnabled(true);
+            jButton4.setEnabled(true);
+            jButton5.setEnabled(true);
+        }
     }//GEN-LAST:event_tblSinhVienMousePressed
 
     private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
@@ -741,6 +797,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
                 + " where MASV = '" + txtMasv.getText() + "'";
         String updateImg = "update STUDENTS set HINH = N'" + imageSave + "'"
                 + " where MASV = '" + txtMasv.getText() + "'";
+
         if (checkMASV()) {
             try {
                 if (!txtHoten.getText().isEmpty()) {
@@ -762,6 +819,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
                 }
                 JOptionPane.showMessageDialog(this, "Update thành công!");
                 loadTable();
+                display(current);
 //                btnNewActionPerformed(evt);
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Update thất bại!\n"
@@ -774,20 +832,20 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
 
     private void jpnAnhMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jpnAnhMousePressed
         JFileChooser fc = new JFileChooser();//mở file
-//        fc.setCurrentDirectory(new File("D:\\"));//set mac dinh
+        fc.setCurrentDirectory(new File("C:\\Users\\nguye\\Downloads\\ANHTHE"));//set mac dinh
         int result = fc.showOpenDialog(this);//hiển thị hộp thoại
         if (result == fc.APPROVE_OPTION) {
             f1 = fc.getSelectedFile();// lấy file được chọn
             imageSave = dir + "\\" + f1.getName();
             String Iname = f1.getAbsolutePath();
             ImageIcon ic = new ImageIcon(Iname);
-            ic.getImage().getScaledInstance(lblAnh.getWidth(), lblAnh.getHeight(), Image.SCALE_SMOOTH);
+            Image scaledImage = ic.getImage().getScaledInstance(lblAnh.getWidth(), lblAnh.getHeight(), Image.SCALE_SMOOTH);
+            ic.setImage(scaledImage); // Cập nhật hình ảnh mới đã co giãn cho ImageIcon
             lblAnh.setText("");
-            lblAnh.setHorizontalAlignment(lblAnh.CENTER);
-            lblAnh.setVerticalAlignment(lblAnh.CENTER);
+            lblAnh.setHorizontalAlignment(JLabel.CENTER);
+            lblAnh.setVerticalAlignment(JLabel.CENTER);
             lblAnh.setIcon(ic);
         }
-
     }//GEN-LAST:event_jpnAnhMousePressed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
@@ -812,16 +870,26 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         current = 0;
         display(current);
+        jButton4.setEnabled(false);
+        jButton5.setEnabled(false);
+        jButton3.setEnabled(true);
+        jButton2.setEnabled(true);
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         current--;
         if (current < 0) {
-            JOptionPane.showMessageDialog(this, "Bạn đang ở đầu danh sách!");
+//            JOptionPane.showMessageDialog(this, "Bạn đang ở đầu danh sách!");
             current = 0;
             return;
         }
         display(current);
+        jButton3.setEnabled(true);
+        jButton2.setEnabled(true);
+        if (current == 0) {
+            jButton5.setEnabled(false);
+            jButton4.setEnabled(false);
+        }
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -832,11 +900,21 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
             return;
         }
         display(current);
+        jButton5.setEnabled(true);
+        jButton4.setEnabled(true);
+        if (current == list.size() - 1) {
+            jButton3.setEnabled(false);
+            jButton2.setEnabled(false);
+        }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         current = list.size() - 1;
         display(current);
+        jButton4.setEnabled(true);
+        jButton5.setEnabled(true);
+        jButton3.setEnabled(false);
+        jButton2.setEnabled(false);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void btnSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSearchActionPerformed
@@ -877,6 +955,7 @@ public class QUANLYSINHVIEN extends javax.swing.JFrame {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(QUANLYSINHVIEN.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */

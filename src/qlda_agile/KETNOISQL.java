@@ -12,7 +12,7 @@ public class KETNOISQL {
                     + "databaseName=" + database + ";encrypt=false";
             // kết nối
             conn = DriverManager.getConnection(url, user, pass);
-            System.out.println("Ket noi thanh cong");
+//            System.out.println("Ket noi thanh cong");
         } catch (SQLException ex) {
             System.out.println("Loi ket noi " + ex.getMessage());
         }

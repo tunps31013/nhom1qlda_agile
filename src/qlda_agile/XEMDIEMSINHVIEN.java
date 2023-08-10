@@ -37,8 +37,10 @@ public class XEMDIEMSINHVIEN extends javax.swing.JFrame {
         }
         conn = KETNOISQL.getConnection("sa", "nguyentuakina", "QLDA_SINHVIEN");
         loadTable();
-//        display(current);
+        display(current);
         lblReocrd.setText(layThongTinBanGhi());
+        jButton4.setEnabled(false);
+        jButton5.setEnabled(false);
     }
 
     public void display(int a) {
@@ -90,53 +92,6 @@ public class XEMDIEMSINHVIEN extends javax.swing.JFrame {
             if (grade.getMaSV().equalsIgnoreCase(txtMasv.getText())) {
                 check = true;
             }
-        }
-        return false;
-    }
-
-    public boolean checkDiem() {
-        double diem;
-        if (txtTienganh.getText().equals("")) {
-            JOptionPane.showMessageDialog(this, "Bạn chưa nhập điểm tiếng anh!");
-            return true;
-        }
-        try {
-            diem = Double.parseDouble(txtTienganh.getText());
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Điểm phải là số!");
-            return true;
-        }
-        if (Double.parseDouble(txtTienganh.getText()) > 10 || Double.parseDouble(txtTienganh.getText()) < 0) {
-            JOptionPane.showMessageDialog(this, "Điểm chỉ được nhập từ 1 đến 10!");
-            return true;
-        }
-        if (txtTinhoc.getText().equals("")) {
-            JOptionPane.showMessageDialog(this, "Bạn chưa nhập điểm tin học!");
-            return true;
-        }
-        try {
-            diem = Double.parseDouble(txtTinhoc.getText());
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Điểm phải là số!");
-            return true;
-        }
-        if (Double.parseDouble(txtTinhoc.getText()) > 10 || Double.parseDouble(txtTinhoc.getText()) < 0) {
-            JOptionPane.showMessageDialog(this, "Điểm chỉ được nhập từ 1 đến 10!");
-            return true;
-        }
-        if (txtGiaoducTC.getText().equals("")) {
-            JOptionPane.showMessageDialog(this, "Bạn chưa nhập điểm GDTC!");
-            return true;
-        }
-        try {
-            diem = Double.parseDouble(txtGiaoducTC.getText());
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Điểm phải là số!");
-            return true;
-        }
-        if (Double.parseDouble(txtGiaoducTC.getText()) > 10 || Double.parseDouble(txtGiaoducTC.getText()) < 0) {
-            JOptionPane.showMessageDialog(this, "Điểm chỉ được nhập từ 1 đến 10!");
-            return true;
         }
         return false;
     }
@@ -493,6 +448,10 @@ public class XEMDIEMSINHVIEN extends javax.swing.JFrame {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         current = list.size() - 1;
         display(current);
+        jButton4.setEnabled(true);
+        jButton5.setEnabled(true);
+        jButton3.setEnabled(false);
+        jButton2.setEnabled(false);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -503,21 +462,37 @@ public class XEMDIEMSINHVIEN extends javax.swing.JFrame {
             return;
         }
         display(current);
+        jButton5.setEnabled(true);
+        jButton4.setEnabled(true);
+        if (current == list.size() - 1) {
+            jButton3.setEnabled(false);
+            jButton2.setEnabled(false);
+        }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         current--;
         if (current < 0) {
-            JOptionPane.showMessageDialog(this, "Bạn đang ở đầu danh sách!");
+//            JOptionPane.showMessageDialog(this, "Bạn đang ở đầu danh sách!");
             current = 0;
             return;
         }
         display(current);
+        jButton3.setEnabled(true);
+        jButton2.setEnabled(true);
+        if (current == 0) {
+            jButton5.setEnabled(false);
+            jButton4.setEnabled(false);
+        }
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         current = 0;
         display(current);
+        jButton4.setEnabled(false);
+        jButton5.setEnabled(false);
+        jButton3.setEnabled(true);
+        jButton2.setEnabled(true);
     }//GEN-LAST:event_jButton4ActionPerformed
 
     /**
@@ -553,6 +528,8 @@ public class XEMDIEMSINHVIEN extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(XEMDIEMSINHVIEN.class
                     .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
         //</editor-fold>
 

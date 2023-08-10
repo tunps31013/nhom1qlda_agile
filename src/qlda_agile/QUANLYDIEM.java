@@ -5,8 +5,8 @@
 package qlda_agile;
 
 import java.sql.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -22,6 +22,7 @@ public class QUANLYDIEM extends javax.swing.JFrame {
     private DefaultTableModel model;
     private Connection conn;
     private ArrayList<GRADE> list = new ArrayList<>();
+    private boolean check = false;
     private int current = 0;
 
     /**
@@ -38,10 +39,23 @@ public class QUANLYDIEM extends javax.swing.JFrame {
         }
         conn = KETNOISQL.getConnection("sa", "nguyentuakina", "QLDA_SINHVIEN");
         loadTable();
-//        display(current);
+        if (!list.isEmpty()) {
+            display(current);
+        }
         lblReocrd.setText(layThongTinBanGhi());
         lblTop3.setVisible(false);
         btnNew.setEnabled(false);
+        btnUpdate.setEnabled(false);
+        setDiem(false);
+        btnAll.setEnabled(false);
+        jButton4.setEnabled(false);
+        jButton5.setEnabled(false);
+    }
+
+    public void setDiem(boolean a) {
+        txtTienganh.setEditable(a);
+        txtTinhoc.setEditable(a);
+        txtGiaoducTC.setEditable(a);
     }
 
     public void loadTable() throws SQLException {
@@ -67,75 +81,172 @@ public class QUANLYDIEM extends javax.swing.JFrame {
             GRADE gr = new GRADE(iD, maSv, hoTen, tiengAnh, tinHoc, gdTC, trungBinh);
             list.add(gr);
         }
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
         for (GRADE gr : list) {
             model.addRow(new Object[]{
                 gr.getMaSV(), gr.getHoTen(), gr.getTiengAnh(), gr.getTinHoc(),
-                gr.getGdTC(), gr.getDiemTb()
+                gr.getGdTC(), decimalFormat.format(gr.getDiemTb())
             });
         }
         rs.close();
     }
 
-    public void setEnable3(boolean a) {
-        txtTienganh.setEditable(a);
-        txtTinhoc.setEditable(a);
-        txtGiaoducTC.setEditable(a);
+    public boolean checkNull() {
+        String formatMaSV = "SV[0-9]{3}";
+        if (txtMasv.getText().equals("")) {
+            JOptionPane.showMessageDialog(this, "Bạn chưa nhập mã sinh viên!");
+            return true;
+        } else if (!txtMasv.getText().matches(formatMaSV)) {
+            JOptionPane.showMessageDialog(this, "Mã sinh viên không đúng định dạng!");
+            return true;
+        }
+        for (GRADE grade : list) {
+            if (grade.getMaSV().equalsIgnoreCase(txtMasv.getText())) {
+                check = true;
+            }
+        }
+        return false;
     }
 
-    public void updateDiem() {
-        String updateSQL = "update GRADE set TIENGANH = ?, TINHOC = ?, GDTC = ? where MASV = '" + txtMasv.getText() + "'";
-        PreparedStatement pst;
+    public boolean checkDiem() {
         double diem;
+        if (txtTienganh.getText().equals("")) {
+            JOptionPane.showMessageDialog(this, "Bạn chưa nhập điểm tiếng anh!");
+            return true;
+        }
         try {
-            double tiengAnh, tinHoc, giaoducTC;
-            if (txtTienganh.getText().equals("")) {
-                tiengAnh = 0;
-            } else {
-                try {
-                    diem = Double.parseDouble(txtTienganh.getText());
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "Điểm phải là số!");
-                    return;
+            diem = Double.parseDouble(txtTienganh.getText());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Điểm phải là số!");
+            return true;
+        }
+        if (Double.parseDouble(txtTienganh.getText()) > 10 || Double.parseDouble(txtTienganh.getText()) < 0) {
+            JOptionPane.showMessageDialog(this, "Điểm chỉ được nhập từ 1 đến 10!");
+            return true;
+        }
+        if (txtTinhoc.getText().equals("")) {
+            JOptionPane.showMessageDialog(this, "Bạn chưa nhập điểm tin học!");
+            return true;
+        }
+        try {
+            diem = Double.parseDouble(txtTinhoc.getText());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Điểm phải là số!");
+            return true;
+        }
+        if (Double.parseDouble(txtTinhoc.getText()) > 10 || Double.parseDouble(txtTinhoc.getText()) < 0) {
+            JOptionPane.showMessageDialog(this, "Điểm chỉ được nhập từ 1 đến 10!");
+            return true;
+        }
+        if (txtGiaoducTC.getText().equals("")) {
+            JOptionPane.showMessageDialog(this, "Bạn chưa nhập điểm GDTC!");
+            return true;
+        }
+        try {
+            diem = Double.parseDouble(txtGiaoducTC.getText());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Điểm phải là số!");
+            return true;
+        }
+        if (Double.parseDouble(txtGiaoducTC.getText()) > 10 || Double.parseDouble(txtGiaoducTC.getText()) < 0) {
+            JOptionPane.showMessageDialog(this, "Điểm chỉ được nhập từ 1 đến 10!");
+            return true;
+        }
+        return false;
+    }
+
+    public boolean checkMaSV() {
+        String selectSQL = "select MASV from STUDENTS";
+        Statement st;
+        try {
+            st = conn.createStatement();
+            ResultSet rs = st.executeQuery(selectSQL);
+            while (rs.next()) {
+                if (rs.getString("MASV").equalsIgnoreCase(txtMasv.getText())) {
+                    return true;
                 }
-                tiengAnh = Double.parseDouble(txtTienganh.getText());
             }
-            if (txtTinhoc.getText().equals("")) {
-                tinHoc = 0;
-            } else {
-                try {
-                    diem = Double.parseDouble(txtTinhoc.getText());
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "Điểm phải là số!");
-                    return;
-                }
-                tinHoc = Double.parseDouble(txtTinhoc.getText());
-            }
-            if (txtGiaoducTC.getText().equals("")) {
-                giaoducTC = 0;
-            } else {
-                try {
-                    diem = Double.parseDouble(txtGiaoducTC.getText());
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "Điểm phải là số!");
-                    return;
-                }
-                giaoducTC = Double.parseDouble(txtGiaoducTC.getText());
-            }
-            pst = conn.prepareStatement(updateSQL);
-            pst.setDouble(1, tiengAnh);
-            pst.setDouble(2, tinHoc);
-            pst.setDouble(3, giaoducTC);
-            int soDong = pst.executeUpdate();
-            if (soDong > 0) {
-                JOptionPane.showMessageDialog(this, "Lưu thành công");
-                loadTable();
-                display(current);
-                setEnable3(false);
-                btnNew.setEnabled(false);
-            }
+            loadTable();
         } catch (SQLException ex) {
             Logger.getLogger(QUANLYDIEM.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return false;
+    }
+
+//    public void btnSave() throws SQLException {
+//        if (checkNull()) {
+//            return;
+//        } else if (check) {
+//            check = false;
+//            JOptionPane.showMessageDialog(this, "Mã sinh viên có điểm!");
+//            return;
+//        } else if (checkDiem()) {
+//            return;
+//        }
+//        if (checkMaSV()) {
+//            int id = 0;
+//            boolean checkID = true;
+//            while (checkID) {
+//                Random random = new Random();
+//                id = random.nextInt(1000); // Thay số trong ngoặc bằng giới hạn trên của giá trị ID
+//                String checkSQL = "select count(*) from GRADE where ID = ?";
+//                PreparedStatement checkStmt = conn.prepareStatement(checkSQL);
+//                checkStmt.setInt(1, id);
+//                ResultSet rs = checkStmt.executeQuery();
+////                if (list.size() > 5) {
+////                    JOptionPane.showMessageDialog(this, "Max ID");
+////                    checkID = false;
+////                }
+//                if (rs.next() && rs.getInt(1) == 0) {
+////                JOptionPane.showMessageDialog(this, rs.getInt(1));
+//                    checkID = false; // Không trùng, thoát khỏi vòng lặp
+//                }
+//
+//            }
+//            Statement st = conn.createStatement();
+//            String insertSQL = "insert into GRADE values"
+//                    + "('" + id + "','" + txtMasv.getText() + "',"
+//                    + "'" + txtTienganh.getText() + "','" + txtTinhoc.getText() + "',"
+//                    + "'" + txtGiaoducTC.getText() + "')";
+//            int soDong = st.executeUpdate(insertSQL);
+//            if (soDong > 0) {
+//                JOptionPane.showMessageDialog(this, "Đã thêm thành công!");
+//            }
+//            loadTable();
+//        } else {
+//            JOptionPane.showMessageDialog(this, "Mã sinh viên không tồn tại!");
+//        }
+//    }
+    public void updateDiem() {
+        String updateSQL = "update GRADE set TIENGANH = ?, TINHOC = ?, GDTC = ? where MASV = '" + txtMasv.getText() + "'";
+        PreparedStatement pst;
+        if (checkNull()) {
+            return;
+        } else if (checkDiem()) {
+            return;
+        } else if (check) {
+            check = false;
+            try {
+                pst = conn.prepareStatement(updateSQL);
+                pst.setDouble(1, Double.parseDouble(txtTienganh.getText()));
+                pst.setDouble(2, Double.parseDouble(txtTinhoc.getText()));
+                pst.setDouble(3, Double.parseDouble(txtGiaoducTC.getText()));
+                int soDong = pst.executeUpdate();
+                if (soDong > 0) {
+                    JOptionPane.showMessageDialog(this, "Update thành công");
+                    loadTable();
+                    display(current);
+                    setDiem(false);
+                    btnUpdate.setEnabled(false);
+                    btnNew.setEnabled(false);
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(QUANLYDIEM.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Mã sinh viên không tồn tại!");
+        }
+
     }
 
     public String layThongTinBanGhi() {
@@ -149,7 +260,8 @@ public class QUANLYDIEM extends javax.swing.JFrame {
         txtTienganh.setText(String.valueOf(gr.getTiengAnh()));
         txtTinhoc.setText(String.valueOf(gr.getTinHoc()));
         txtGiaoducTC.setText(String.valueOf(gr.getGdTC()));
-        lblTB.setText(String.valueOf(gr.getDiemTb()));
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        lblTB.setText(String.valueOf(decimalFormat.format(gr.getDiemTb())));
         tblDiem.setRowSelectionInterval(so, so);
         current = so;
         lblReocrd.setText(layThongTinBanGhi());
@@ -184,8 +296,9 @@ public class QUANLYDIEM extends javax.swing.JFrame {
         jPanel3 = new javax.swing.JPanel();
         lblTB = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
-        btnSave = new javax.swing.JButton();
         btnNew = new javax.swing.JButton();
+        btnEdit = new javax.swing.JButton();
+        btnUpdate = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
@@ -198,7 +311,6 @@ public class QUANLYDIEM extends javax.swing.JFrame {
         btnAll = new javax.swing.JButton();
         btnLogout = new javax.swing.JButton();
         lblReocrd = new javax.swing.JLabel();
-        btnEdit = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -257,20 +369,16 @@ public class QUANLYDIEM extends javax.swing.JFrame {
 
         jLabel9.setText("Giáo dục TC:");
 
-        txtTienganh.setEditable(false);
-
         txtMasv.setEditable(false);
 
         txtHoten.setEditable(false);
 
-        txtTinhoc.setEditable(false);
         txtTinhoc.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtTinhocActionPerformed(evt);
             }
         });
 
-        txtGiaoducTC.setEditable(false);
         txtGiaoducTC.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtGiaoducTCActionPerformed(evt);
@@ -364,19 +472,27 @@ public class QUANLYDIEM extends javax.swing.JFrame {
                 .addContainerGap(20, Short.MAX_VALUE))
         );
 
-        btnSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/Save.png"))); // NOI18N
-        btnSave.setText("Save");
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveActionPerformed(evt);
-            }
-        });
-
-        btnNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/New.png"))); // NOI18N
-        btnNew.setText("NEW");
+        btnNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/add.png"))); // NOI18N
+        btnNew.setText("New");
         btnNew.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNewActionPerformed(evt);
+            }
+        });
+
+        btnEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/update_1.png"))); // NOI18N
+        btnEdit.setText("EDIT");
+        btnEdit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditActionPerformed(evt);
+            }
+        });
+
+        btnUpdate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/update.png"))); // NOI18N
+        btnUpdate.setText("Update");
+        btnUpdate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUpdateActionPerformed(evt);
             }
         });
 
@@ -469,14 +585,6 @@ public class QUANLYDIEM extends javax.swing.JFrame {
         lblReocrd.setForeground(new java.awt.Color(255, 0, 51));
         lblReocrd.setText("Record: 0 of 10");
 
-        btnEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/update_1.png"))); // NOI18N
-        btnEdit.setText("EDIT");
-        btnEdit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnEditActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -499,9 +607,9 @@ public class QUANLYDIEM extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(lblReocrd)
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                        .addComponent(btnNew, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
-                                        .addComponent(btnSave, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnEdit, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))))))
+                                        .addComponent(btnUpdate, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+                                        .addComponent(btnEdit, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(btnNew, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(16, 16, 16)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -527,18 +635,21 @@ public class QUANLYDIEM extends javax.swing.JFrame {
                 .addComponent(jLabel2)
                 .addGap(0, 0, 0)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(btnNew, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addComponent(btnNew)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnEdit, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(21, 21, 21)))
+                        .addComponent(btnUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(15, 15, 15)
                         .addComponent(lblReocrd)))
@@ -549,7 +660,7 @@ public class QUANLYDIEM extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblTop3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 76, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -564,19 +675,57 @@ public class QUANLYDIEM extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtTinhocActionPerformed
 
+    private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
+        txtSearchMasv.setText("");
+        txtTienganh.setText("");
+        txtTinhoc.setText("");
+        txtGiaoducTC.setText("");
+        lblTB.setText("0");
+//        model.setRowCount(0);
+//        try {
+//            loadTable();
+//        } catch (SQLException ex) {
+//            Logger.getLogger(QUANLYDIEM.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+    }//GEN-LAST:event_btnNewActionPerformed
+
+    private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
+        btnNew.setEnabled(true);
+        btnUpdate.setEnabled(true);
+        setDiem(true);
+    }//GEN-LAST:event_btnEditActionPerformed
+
+    private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
+        updateDiem();
+    }//GEN-LAST:event_btnUpdateActionPerformed
+
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         current = list.size() - 1;
         display(current);
+        jButton4.setEnabled(true);
+        jButton5.setEnabled(true);
+        jButton3.setEnabled(false);
+        jButton2.setEnabled(false);
+        setDiem(false);
+        btnNew.setEnabled(false);
+        btnUpdate.setEnabled(false);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void btnAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAllActionPerformed
         try {
+            current = 0;
             loadTable();
             lblTop3.setVisible(false);
-
+            btnTop3.setEnabled(true);
+            display(current);
+            setDiem(false);
+            btnAll.setEnabled(false);
+            jButton3.setEnabled(true);
+            jButton2.setEnabled(true);
+            jButton4.setEnabled(false);
+            jButton5.setEnabled(false);
         } catch (SQLException ex) {
-            Logger.getLogger(QUANLYDIEM.class
-                    .getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(QUANLYDIEM.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnAllActionPerformed
 
@@ -584,6 +733,7 @@ public class QUANLYDIEM extends javax.swing.JFrame {
         String selectTOP3 = "select top 3 GRADE.ID, GRADE.MASV, STUDENTS.HOTEN, GRADE.TIENGANH, GRADE.TINHOC, GRADE.GDTC "
                 + "from GRADE, STUDENTS where GRADE.MASV = STUDENTS.MASV order by (TIENGANH+TINHOC+GDTC)/3 desc";
         try {
+            btnNewActionPerformed(evt);
             Statement st = conn.createStatement();
             ResultSet rs = st.executeQuery(selectTOP3);
             model.setRowCount(0);
@@ -610,6 +760,14 @@ public class QUANLYDIEM extends javax.swing.JFrame {
             System.out.println(ex);
         }
         lblTop3.setVisible(true);
+        btnAll.setEnabled(true);
+        btnTop3.setEnabled(false);
+        display(current);
+        setDiem(false);
+        jButton3.setEnabled(true);
+        jButton2.setEnabled(true);
+        jButton4.setEnabled(false);
+        jButton5.setEnabled(false);
     }//GEN-LAST:event_btnTop3ActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
@@ -630,14 +788,33 @@ public class QUANLYDIEM extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     private void tblDiemMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDiemMousePressed
-        int index = tblDiem.getSelectedRow();
-        current = index;
-        txtHoten.setText(list.get(index).getHoTen());
-        txtMasv.setText(list.get(index).getMaSV());
-        txtTienganh.setText(String.valueOf(list.get(index).getTiengAnh()));
-        txtTinhoc.setText(String.valueOf(list.get(index).getTinHoc()));
-        txtGiaoducTC.setText(String.valueOf(list.get(index).getGdTC()));
-        lblTB.setText(String.valueOf(list.get(index).getDiemTb()));
+//        int index = tblDiem.getSelectedRow();
+//        current = index;
+//        txtHoten.setText(list.get(index).getHoTen());
+//        txtMasv.setText(list.get(index).getMaSV());
+//        txtTienganh.setText(String.valueOf(list.get(index).getTiengAnh()));
+//        txtTinhoc.setText(String.valueOf(list.get(index).getTinHoc()));
+//        txtGiaoducTC.setText(String.valueOf(list.get(index).getGdTC()));
+//        lblTB.setText(String.valueOf(list.get(index).getDiemTb()));
+        current = tblDiem.getSelectedRow();
+        display(current);
+        layThongTinBanGhi();
+        if (current <= 0) {
+            jButton4.setEnabled(false);
+            jButton5.setEnabled(false);
+            jButton3.setEnabled(true);
+            jButton2.setEnabled(true);
+        } else if (current == list.size() - 1) {
+            jButton4.setEnabled(true);
+            jButton5.setEnabled(true);
+            jButton3.setEnabled(false);
+            jButton2.setEnabled(false);
+        } else {
+            jButton3.setEnabled(true);
+            jButton2.setEnabled(true);
+            jButton4.setEnabled(true);
+            jButton5.setEnabled(true);
+        }
     }//GEN-LAST:event_tblDiemMousePressed
 
     private void btnSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSearchActionPerformed
@@ -656,6 +833,13 @@ public class QUANLYDIEM extends javax.swing.JFrame {
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         current = 0;
         display(current);
+        setDiem(false);
+        btnNew.setEnabled(false);
+        btnUpdate.setEnabled(false);
+        jButton4.setEnabled(false);
+        jButton5.setEnabled(false);
+        jButton3.setEnabled(true);
+        jButton2.setEnabled(true);
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -666,33 +850,35 @@ public class QUANLYDIEM extends javax.swing.JFrame {
             return;
         }
         display(current);
+        jButton5.setEnabled(true);
+        jButton4.setEnabled(true);
+        btnNew.setEnabled(false);
+        btnUpdate.setEnabled(false);
+        setDiem(false);
+        if (current == list.size() - 1) {
+            jButton3.setEnabled(false);
+            jButton2.setEnabled(false);
+        }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         current--;
         if (current < 0) {
-            JOptionPane.showMessageDialog(this, "Bạn đang ở đầu danh sách!");
+//            JOptionPane.showMessageDialog(this, "Bạn đang ở đầu danh sách!");
             current = 0;
             return;
         }
         display(current);
+        jButton3.setEnabled(true);
+        jButton2.setEnabled(true);
+        btnNew.setEnabled(false);
+        btnUpdate.setEnabled(false);
+        setDiem(false);
+        if (current == 0) {
+            jButton5.setEnabled(false);
+            jButton4.setEnabled(false);
+        }
     }//GEN-LAST:event_jButton5ActionPerformed
-
-    private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
-        txtTienganh.setText("");
-        txtTinhoc.setText("");
-        txtGiaoducTC.setText("");
-
-    }//GEN-LAST:event_btnNewActionPerformed
-
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
-        updateDiem();
-    }//GEN-LAST:event_btnSaveActionPerformed
-
-    private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
-        setEnable3(true);
-        btnNew.setEnabled(true);
-    }//GEN-LAST:event_btnEditActionPerformed
 
     /**
      * @param args the command line arguments
@@ -728,6 +914,7 @@ public class QUANLYDIEM extends javax.swing.JFrame {
                     .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -748,9 +935,9 @@ public class QUANLYDIEM extends javax.swing.JFrame {
     private javax.swing.JButton btnEdit;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnNew;
-    private javax.swing.JButton btnSave;
     private javax.swing.JButton btnSearch;
     private javax.swing.JButton btnTop3;
+    private javax.swing.JButton btnUpdate;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
